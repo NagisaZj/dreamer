@@ -97,6 +97,45 @@ class ConvEncoder(tools.Module):
     shape = tf.concat([tf.shape(obs['image'])[:-3], [32 * self._depth]], 0)
     return tf.reshape(x, shape)
 
+class DenseEncoder(tools.Module):
+
+  def __init__(self, shape, layers, units, dist='normal', act=tf.nn.elu):
+    self._shape = shape
+    self._layers = layers
+    self._units = units
+    self._dist = dist
+    self._act = act
+
+  def __call__(self, features):
+    x = features['image']
+    for index in range(self._layers):
+      x = self.get(f'h{index}', tfkl.Dense, self._units, self._act)(x)
+    x = self.get(f'hout', tfkl.Dense, np.prod(self._shape))(x)
+    # x = tf.reshape(x, tf.concat([tf.shape(features)[:-1], self._shape], 0))
+    return x
+    # if self._dist == 'normal':
+    #   return tfd.Independent(tfd.Normal(x, 1), len(self._shape))
+    # if self._dist == 'binary':
+    #   return tfd.Independent(tfd.Bernoulli(x), len(self._shape))
+    # raise NotImplementedError(self._dist)
+
+
+class DenseDecoder2(tools.Module):
+
+  def __init__(self, shape, layers, units, dist='normal', act=tf.nn.elu):
+    self._shape = shape
+    self._layers = layers
+    self._units = units
+    self._dist = dist
+    self._act = act
+
+  def __call__(self, features):
+    x = features
+    for index in range(self._layers):
+      x = self.get(f'h{index}', tfkl.Dense, self._units, self._act)(x)
+    x = self.get(f'hout', tfkl.Dense, np.prod(self._shape))(x)
+    # x = tf.reshape(x, tf.concat([tf.shape(features)[:-1], self._shape], 0))
+    return tfd.Independent(tfd.Normal(x, 1))
 
 class ConvDecoder(tools.Module):
 

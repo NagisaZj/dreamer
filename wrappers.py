@@ -9,6 +9,33 @@ import numpy as np
 from PIL import Image
 
 
+class RobosuiteWrapper:
+  def __init__(self,env, name=None, size=(64, 64), camera=None):
+    self._env = env
+
+  @property
+  def observation_space(self):
+    spaces = {}
+    spaces['image'] = self._env.observation_space
+    return gym.spaces.Dict(spaces)
+
+  @property
+  def action_space(self):
+    return self._env.action_space
+
+  def step(self, action):
+    ns,r,d, info = self._env.step(action)
+    obs = {'image': ns}
+    reward = r
+    return obs, r, d, info
+
+  def reset(self):
+    obs = self._env.reset()
+    obs = {'image': obs}
+    return obs
+
+
+
 class DeepMindControl:
 
   def __init__(self, name, size=(64, 64), camera=None):
